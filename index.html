@@ -151,13 +151,20 @@
                 return;
             }
 
+            console.log("Form submitted. Start Date:", startDate, "End Date:", endDate);
+
             try {
+                console.log("Attempting to generate report...");
                 const backendBaseUrl = "https://8000-ihn8zn5hm53rc6r58lzrs-aea5ec1f.manus.computer";
-                const response = await fetch(`${backendBaseUrl}/api/ai/generate-report`, { 
+                const fetchUrl = `${backendBaseUrl}/api/ai/generate-report`;
+                console.log("Fetching from URL:", fetchUrl);
+
+                const response = await fetch(fetchUrl, { 
                     method: "POST", 
                     headers: { "Content-Type": "application/json" }, 
                     body: JSON.stringify({ start_date: startDate, end_date: endDate })
                 });
+                console.log("Fetch response received:", response);
 
                 loadingMessage.style.display = "none";
                 submitButton.disabled = false;
