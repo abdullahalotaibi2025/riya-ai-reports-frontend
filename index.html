@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلب تقرير التحليلات</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="date"],
+        input[type="text"],
+        select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #8A2BE2; /* Purple */
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #7B24CB; /* Darker Purple */
+        }
+        .report-output, .excel-link-container, .pdf-link-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9e9e9;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            white-space: pre-wrap; /* To preserve formatting of the report */
+            min-height: 50px; /* Adjusted min-height */
+        }
+        .excel-link-container a, .pdf-link-container a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .excel-link-container a:hover, .pdf-link-container a:hover {
+            text-decoration: underline;
+        }
+        .loading-message, .error-message {
+            text-align: center;
+            padding: 10px;
+            color: #777;
+            margin-top: 10px;
+        }
+        .error-message {
+            color: red;
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>طلب تقرير تحليلات Google Analytics الشامل لمنصة ريا</h1>
+        
+        <form id="reportForm">
+            <div>
+                <label for="startDate">تاريخ البدء:</label>
+                <input type="date" id="startDate" name="startDate" required>
+            </div>
+            
+            <div>
+                <label for="endDate">تاريخ الانتهاء:</label>
+                <input type="date" id="endDate" name="endDate" required>
+            </div>
+            
+            <button type="submit" id="submitButton">إنشاء التقرير</button>
+        </form>
+        
+        <div id="loadingMessage" class="loading-message" style="display: none;">
+            جاري إنشاء التقرير، يرجى الانتظار...
+        </div>
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <h2>التحليل النصي:</h2>
+        <div id="reportOutput" class="report-output">
+            سيظهر التحليل النصي هنا بعد إنشاء التقرير...
+        </div>
+
+        <h2>تنزيل ملف البيانات (Excel):</h2>
+        <div id="excelLinkContainer" class="excel-link-container">
+            سيظهر رابط تنزيل ملف Excel هنا...
+        </div>
+
+        <h2>تنزيل التقرير (PDF):</h2>
+        <div id="pdfLinkContainer" class="pdf-link-container">
+            سيظهر رابط تنزيل تقرير PDF هنا بعد إنشائه...
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("reportForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            const submitButton = document.getElementById("submitButton");
+            const loadingMessage = document.getElementById("loadingMessage");
+            const errorMessage = document.getElementById("errorMessage");
+            const reportOutput = document.getElementById("reportOutput");
+            const excelLinkContainer = document.getElementById("excelLinkContainer");
+            const pdfLinkContainer = document.getElementById("pdfLinkContainer");
+
+            // Reset previous messages/links
+            loadingMessage.style.display = "block";
+            errorMessage.style.display = "none";
+            errorMessage.textContent = "";
+            reportOutput.textContent = "جاري المعالجة...";
+            excelLinkContainer.innerHTML = "جاري تجهيز رابط Excel...";
+            pdfLinkContainer.innerHTML = "جاري تجهيز رابط PDF...";
+            submitButton.disabled = true;
+
+            const startDate = document.getElementById("startDate").value;
+            const endDate = document.getElementById("endDate").value;
+
+            if (!startDate || !endDate) {
+                errorMessage.textContent = "يرجى تحديد تاريخ البدء وتاريخ الانتهاء.";
+                errorMessage.style.display = "block";
+                loadingMessage.style.display = "none";
+                submitButton.disabled = false;
+                return;
+            }
+
+            try {
+                const backendBaseUrl = "http://85.237.211.38:8000";
+                const response = await fetch(`${backendBaseUrl}/api/ai/generate-report`, { 
+                    method: "POST", 
+                    headers: { "Content-Type": "application/json" }, 
+                    body: JSON.stringify({ start_date: startDate, end_date: endDate })
+                });
+
+                loadingMessage.style.display = "none";
+                submitButton.disabled = false;
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: `خطأ في الخادم: ${response.status}` }));
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                reportOutput.textContent = data.generated_analysis || "لم يتم إنشاء تحليل نصي.";
+                
+                if (data.excel_report_path) {
+                    const excelFilename = data.excel_report_path.split("/").pop();
+                    const excelDownloadLink = document.createElement("a");
+                    excelDownloadLink.href = `${backendBaseUrl}/api/ai/download-report/${excelFilename}`;
+                    excelDownloadLink.textContent = `تنزيل ملف البيانات (${excelFilename})`;
+                    excelDownloadLink.target = "_blank";
+                    excelLinkContainer.innerHTML = ""; 
+                    excelLinkContainer.appendChild(excelDownloadLink);
+                } else {
+                    excelLinkContainer.textContent = "لم يتم إنشاء ملف Excel.";
+                }
+
+                if (data.pdf_report_path) {
+                    const pdfFilename = data.pdf_report_path.split("/").pop();
+                    const pdfDownloadLink = document.createElement("a");
+                    pdfDownloadLink.href = `${backendBaseUrl}/api/ai/download-report/${pdfFilename}`;
+                    pdfDownloadLink.textContent = `تنزيل التقرير (${pdfFilename})`;
+                    pdfDownloadLink.target = "_blank";
+                    pdfLinkContainer.innerHTML = ""; 
+                    pdfLinkContainer.appendChild(pdfDownloadLink);
+                } else {
+                    pdfLinkContainer.textContent = "لم يتم إنشاء ملف PDF.";
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                errorMessage.textContent = "حدث خطأ أثناء إنشاء التقرير: " + error.message;
+                errorMessage.style.display = "block";
+                reportOutput.textContent = "فشل إنشاء التقرير.";
+                excelLinkContainer.textContent = "فشل إنشاء رابط Excel.";
+                pdfLinkContainer.textContent = "فشل إنشاء رابط PDF.";
+                loadingMessage.style.display = "none";
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+
