@@ -95,6 +95,11 @@
                 <label for="endDate">تاريخ الانتهاء:</label>
                 <input type="date" id="endDate" name="endDate" required>
             </div>
+
+            <div>
+                <label for="reportTitle">عنوان التقرير:</label>
+                <input type="text" id="reportTitle" name="reportTitle" placeholder="أدخل عنوان التقرير هنا" required>
+            </div>
             
             <button type="submit" id="submitButton">إنشاء التقرير</button>
         </form>
@@ -142,16 +147,17 @@
 
             const startDate = document.getElementById("startDate").value;
             const endDate = document.getElementById("endDate").value;
+            const reportTitle = document.getElementById("reportTitle").value;
 
-            if (!startDate || !endDate) {
-                errorMessage.textContent = "يرجى تحديد تاريخ البدء وتاريخ الانتهاء.";
+            if (!startDate || !endDate || !reportTitle) {
+                errorMessage.textContent = "يرجى تحديد تاريخ البدء وتاريخ الانتهاء وعنوان التقرير.";
                 errorMessage.style.display = "block";
                 loadingMessage.style.display = "none";
                 submitButton.disabled = false;
                 return;
             }
 
-            console.log("Form submitted. Start Date:", startDate, "End Date:", endDate);
+            console.log("Form submitted. Start Date:", startDate, "End Date:", endDate, "Report Title:", reportTitle);
 
             try {
                 console.log("Attempting to generate report...");
@@ -162,7 +168,7 @@
                 const response = await fetch(fetchUrl, { 
                     method: "POST", 
                     headers: { "Content-Type": "application/json" }, 
-                    body: JSON.stringify({ start_date: startDate, end_date: endDate })
+                    body: JSON.stringify({ start_date: startDate, end_date: endDate, reportTitle: reportTitle })
                 });
                 console.log("Fetch response received:", response);
 
